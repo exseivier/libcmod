@@ -183,7 +183,7 @@ struct DNA* splitBioString(struct DNA* seqs, int size, int step)
 			sptSeqs->seq_len = (int*)realloc(sptSeqs->seq_len, sizeof(int) * ITEMS_BUFFER);
 			sptSeqs->hide = (int*)realloc(sptSeqs->hide, sizeof(int) * ITEMS_BUFFER);
 		}
-		for(int j = seqs->start[i]; j < seqs->end[i]; j = j+step-1)
+		for(int j = seqs->start[i]; j < seqs->end[i]; j = j+step)
 		{
 			sprintf(header_buffer, "%s_%d", seqs->ids[i], itemCount);
 			sptSeqs->ids[itemCount] = strdup(header_buffer);
