@@ -6,7 +6,7 @@ OUT=libdnah.so
 build: $(OUT)
 
 $(OUT): $(LIB)/$(SRC)
-	gcc $(FLAGS) -o $(OUT) $(LIB)/$(SRC)
+	gcc $(FLAGS) -o $(OUT) $(LIB)/$(SRC) -lm
 
 delete:
 	@rm $(OUT)
