@@ -51,4 +51,7 @@ void filterBioseq(struct DNA* bs, struct lkdList* headers);
 //	Writes to file those sequences which has not BLAST hit.
 void writeNoHideToFile(struct DNA* bs);
 
+//	Samples sequences from DNA structure and wrties them into file.
+void sampleSeqs(struct DNA* bs, int perc, char* outfile);
+
 #endif

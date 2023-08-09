@@ -1,5 +1,5 @@
-
-
+#include <math.h>
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -154,15 +154,10 @@ void freeLkdList(struct lkdList* lkdlst)
 
 struct DNA* splitBioString(struct DNA* seqs, int size, int step)
 {
-	int ITEMS_BUFFER = 256;
+	int ITEMS_BUFFER = 0;
 	int itemCount = 0;
 	int seq_len = strlen(seqs->seq);
 	struct DNA* sptSeqs = (struct DNA*)calloc(sizeof(struct DNA), 1);
-	sptSeqs->ids = (char**)calloc(sizeof(char*), ITEMS_BUFFER);
-	sptSeqs->start = (int*)calloc(sizeof(int), ITEMS_BUFFER);
-	sptSeqs->end = (int*)calloc(sizeof(int), ITEMS_BUFFER);
-	sptSeqs->seq_len = (int*)calloc(sizeof(int), ITEMS_BUFFER);
-	sptSeqs->hide = (int*)calloc(sizeof(int), ITEMS_BUFFER);
 	sptSeqs->seq = (char*)calloc(sizeof(char), seq_len+1);
 	for (int i = 0; i < seq_len; i++)
 	{
@@ -172,17 +167,17 @@ struct DNA* splitBioString(struct DNA* seqs, int size, int step)
 
 	int i = 0;
 	char header_buffer[256];
+	double next_items = 0.0;
 	while (seqs->ids[i] != NULL)
 	{
-		if (itemCount + ((seqs->end[i] - seqs->start[i] +1) / step)>= ITEMS_BUFFER)
-		{
-			ITEMS_BUFFER = ITEMS_BUFFER * 2;
-			sptSeqs->ids = (char**)realloc(sptSeqs->ids, sizeof(char*) * ITEMS_BUFFER);
-			sptSeqs->start = (int*)realloc(sptSeqs->start, sizeof(int) * ITEMS_BUFFER);
-			sptSeqs->end = (int*)realloc(sptSeqs->end, sizeof(int) * ITEMS_BUFFER);
-			sptSeqs->seq_len = (int*)realloc(sptSeqs->seq_len, sizeof(int) * ITEMS_BUFFER);
-			sptSeqs->hide = (int*)realloc(sptSeqs->hide, sizeof(int) * ITEMS_BUFFER);
-		}
+		next_items = (double)(seqs->end[i] - seqs->start[i] + 1) / step;
+		ITEMS_BUFFER = (int)ceil(itemCount + next_items);
+		sptSeqs->ids = (char**)realloc(sptSeqs->ids, sizeof(char*) * ITEMS_BUFFER);
+		sptSeqs->start = (int*)realloc(sptSeqs->start, sizeof(int) * ITEMS_BUFFER);
+		sptSeqs->end = (int*)realloc(sptSeqs->end, sizeof(int) * ITEMS_BUFFER);
+		sptSeqs->seq_len = (int*)realloc(sptSeqs->seq_len, sizeof(int) * ITEMS_BUFFER);
+		sptSeqs->hide = (int*)realloc(sptSeqs->hide, sizeof(int) * ITEMS_BUFFER);
+		
 		for(int j = seqs->start[i]; j < seqs->end[i]; j = j+step)
 		{
 			sprintf(header_buffer, "%s_%d", seqs->ids[i], itemCount);
@@ -195,6 +190,27 @@ struct DNA* splitBioString(struct DNA* seqs, int size, int step)
 		}
 		i++;
 	}
+
+	if (itemCount > ITEMS_BUFFER)
+	{
+		printf("Can't be possible. That means a memory allocation error!");
+		exit(1);
+	}
+	if (itemCount == ITEMS_BUFFER)
+	{
+		ITEMS_BUFFER = ITEMS_BUFFER + 1;
+		sptSeqs->ids = (char**)realloc(sptSeqs->ids, sizeof(char*) * ITEMS_BUFFER);
+		sptSeqs->start = (int*)realloc(sptSeqs->start, sizeof(int) * ITEMS_BUFFER);
+		sptSeqs->end = (int*)realloc(sptSeqs->end, sizeof(int) * ITEMS_BUFFER);
+		sptSeqs->seq_len = (int*)realloc(sptSeqs->seq_len, sizeof(int) * ITEMS_BUFFER);
+		sptSeqs->hide = (int*)realloc(sptSeqs->hide, sizeof(int) * ITEMS_BUFFER);
+	}
+	sptSeqs->ids[itemCount] = '\0';
+	sptSeqs->start[itemCount] = '\0';
+	sptSeqs->end[itemCount] = '\0';
+	sptSeqs->seq_len[itemCount] = '\0';
+	sptSeqs->hide[itemCount] = '\0';
+
 	return sptSeqs;
 }
 
@@ -253,7 +269,7 @@ void writeNoHideToFile(struct DNA* bs)
 	{
 		if (bs->hide[i] == 0)
 		{
-			char* seqCarrier = (char*)calloc(sizeof(char), (bs->end[i] - bs->start[i] + 1));
+			char* seqCarrier = (char*)calloc(sizeof(char), (bs->end[i] - bs->start[i] + 2));
 			int j = 0;
 			int k = bs->start[i];
 			while (k < bs->end[i]+1)
@@ -272,5 +288,40 @@ void writeNoHideToFile(struct DNA* bs)
 	fclose(output);
 }
 
+void sampleSeqs(struct DNA* bs, int perc, char* outfile)
+{
+	/*
+	 * Samples sequences from DNA structure and writes them to file.
+	 * 	perc means the percent of sequences to sample.
+	 */
+
+	int randint = 0;
+	int i = 0;
+	FILE* out = fopen(outfile, "w");
+	srand(time(0));
+	while (bs->ids[i] != NULL)
+	{
+		randint = rand() % 100;
+		if (randint < perc)
+		{
+			
+			char* seqCarrier = (char*)calloc(sizeof(char), (bs->end[i] - bs->start[i] + 2));
+			int j = 0;
+			int k = bs->start[i];
+			while (k < bs->end[i]+1)
+			{
+				seqCarrier[j] = bs->seq[k];
+				j++;
+				k++;
+			}
+			seqCarrier[j] = '\0';
+			fprintf(out, "%s\n%s\n", bs->ids[i], seqCarrier);
+			free(seqCarrier);
+			seqCarrier = NULL;
+		}
+		i++;
+	}
+	fclose(out);
+}
 
 
